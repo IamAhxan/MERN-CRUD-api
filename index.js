@@ -1,84 +1,76 @@
-const express = require('express')
-const mongoose = require('mongoose')
-const cors = require('cors')
-const UserModel = require('./models/Users')
+const express = require("express");
+const mongoose = require("mongoose");
+const cors = require("cors");
+const UserModel = require("../models/Users");
 
+const app = express();
 
+// ✅ Allow frontend to access
+app.use(
+    cors({
+        origin: "https://mern-crud-frontend-rose.vercel.app", // your frontend on vercel
+        methods: ["GET", "POST", "PUT", "DELETE"],
+        credentials: true,
+    })
+);
 
-const app = express()
-const port = process.env.PORT || 3001;
+app.use(express.json());
 
-const mongoUrl = "mongodb+srv://mohammadahsan7744:obY6hENfOpxCIVCE@cluster0.uydw7eo.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0";
+// ✅ MongoDB connection (only once)
+let isConnected = false;
+async function connectDB() {
+    if (isConnected) return;
+    try {
+        await mongoose.connect(
+            "mongodb+srv://<username>:<password>@cluster0.uydw7eo.mongodb.net/EXAMPLEDATABASE?retryWrites=true&w=majority&appName=Cluster0",
+            {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+            }
+        );
+        isConnected = true;
+        console.log("MongoDB connected");
+    } catch (err) {
+        console.error("MongoDB connection error:", err);
+    }
+}
 
-app.use(cors({
-    origin: ["https://mern-crud-frontend-rose.vercel.app/"],
-    methods: ['GET', "POST", "PUT", "DELETE"],
-    credentials: true
-}))
-app.use(express.json())
+// ✅ Middleware to ensure DB is connected
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
 
-mongoose.connect(mongoUrl, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-    .then(() => console.log("✅ MongoDB connected to test DB"))
-    .catch(err => console.error("❌ MongoDB connection error:", err));
-
-// let isConnected = false;
-// async function connectToMongoDB() {
-//     try {
-//         await mongoose.connect(mongoUrl, {
-//             useNewUrlParser: true,
-//             useUnifiedTopology: true
-//         });
-//         isCOnnected = true;
-//         console.log("Connected to Mongo DB");
-//     } catch (error) {
-//         console.log("mongoDB error: ", error)
-//     }
-// }
-// app.use((req, res, next) => {
-//     if (!isConnected) {
-//         connectToMongoDB()
-//     }
-//     next()
-// })
-
-app.get('/', (req, res) => {
+// ✅ Routes
+app.get("/", (req, res) => {
     UserModel.find({})
-        .then(users => {
-            res.json(users)
-        })
-        .catch(err => console.log(err))
-})
+        .then((users) => res.json(users))
+        .catch((err) => res.status(500).json({ error: err.message }));
+});
 
-app.get('/getUser/:id', (req, res) => {
-    const id = req.params.id
-    UserModel.findById({ _id: id })
-        .then(users => res.json(users))
-        .catch(err => console.log(err))
-})
-
-app.put("/updateUser/:id", (req, res) => {
-    const id = req.params.id;
-    UserModel.findByIdAndUpdate({ _id: id }, { name: req.body.name, email: req.body.email, age: req.body.age })
-        .then(users => res.json(users))
-        .catch(err => console.log(err))
-})
-app.delete("/deleteUser/:id", (req, res) => {
-    const id = req.params.id
-    UserModel.findByIdAndDelete({ _id: id })
-        .then(result => res.json(result))
-        .catch(err => console.log(err)
-        )
-})
+app.get("/getUser/:id", (req, res) => {
+    UserModel.findById(req.params.id)
+        .then((user) => res.json(user))
+        .catch((err) => res.status(500).json({ error: err.message }));
+});
 
 app.post("/createUser", (req, res) => {
-    console.log(req.body)
-    UserModel.create(req.body).then(users => res.json(users)).catch(err => res.json(err))
-})
+    UserModel.create(req.body)
+        .then((user) => res.json(user))
+        .catch((err) => res.status(500).json({ error: err.message }));
+});
 
-app.listen(port, () => {
-    console.log("server in running")
-})
-// module.exports = app
+app.put("/updateUser/:id", (req, res) => {
+    UserModel.findByIdAndUpdate(req.params.id, req.body, { new: true })
+        .then((user) => res.json(user))
+        .catch((err) => res.status(500).json({ error: err.message }));
+});
+
+app.delete("/deleteUser/:id", (req, res) => {
+    UserModel.findByIdAndDelete(req.params.id)
+        .then((result) => res.json(result))
+        .catch((err) => res.status(500).json({ error: err.message }));
+});
+
+// ✅ Important: export app (no app.listen on Vercel)
+module.exports = app;
