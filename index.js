@@ -10,11 +10,8 @@ const port = process.env.PORT || 3001;
 
 const mongoUrl = "mongodb+srv://mohammadahsan7744:obY6hENfOpxCIVCE@cluster0.uydw7eo.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0";
 
-app.use(cors({
-    origin: ["https://mern-crud-frontend-rose.vercel.app/"],
-    methods: ['GET', "POST", "PUT", "DELETE"],
-    credentials: true
-}))
+app.use(cors());
+
 app.use(express.json())
 
 mongoose.connect(mongoUrl, {
