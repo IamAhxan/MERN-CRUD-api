@@ -8,7 +8,7 @@ const UserModel = require('./models/Users')
 const app = express()
 const port = process.env.PORT || 3001;
 
-const mongoUrl = "mongodb+srv://mohammadahsan7744:<db_password>@cluster0.uydw7eo.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
+const mongoUrl = "mongodb+srv://mohammadahsan7744:obY6hENfOpxCIVCE@cluster0.uydw7eo.mongodb.net/test?retryWrites=true&w=majority&appName=Cluster0";
 
 app.use(cors({
     origin: ["https://mern-crud-frontend-rose.vercel.app/"],
@@ -17,7 +17,12 @@ app.use(cors({
 }))
 app.use(express.json())
 
-mongoose.connect(mongoUrl)
+mongoose.connect(mongoUrl, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+    .then(() => console.log("✅ MongoDB connected to test DB"))
+    .catch(err => console.error("❌ MongoDB connection error:", err));
 
 // let isConnected = false;
 // async function connectToMongoDB() {
@@ -42,7 +47,6 @@ mongoose.connect(mongoUrl)
 app.get('/', (req, res) => {
     UserModel.find({})
         .then(users => {
-            res.send("server is running")
             res.json(users)
         })
         .catch(err => console.log(err))
@@ -77,5 +81,4 @@ app.post("/createUser", (req, res) => {
 app.listen(port, () => {
     console.log("server in running")
 })
-
 // module.exports = app
